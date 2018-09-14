@@ -7,3 +7,6 @@
 build/
 
 .flutter-plugins
+.idea/libraries/Dart_SDK.xml
+.idea/libraries/Flutter_for_Android.xml
+.vscode/settings.json

@@ -1,6 +1,10 @@
 import 'package:drinner_flutter/bloc/BaseBloc.dart';
 import 'package:flutter/material.dart';
 
+abstract class BaseBloc {
+  void dispose();
+}
+
 class BlocProvider<T extends BaseBloc> extends StatefulWidget {
   BlocProvider({
     Key key,

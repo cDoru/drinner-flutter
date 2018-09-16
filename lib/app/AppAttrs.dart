@@ -14,6 +14,7 @@ abstract class AppAttrs {
 
   Brightness get brightness;
   IconData get appModeIconData;
+  String get mapboxStyle;
 }
 
 class _LightAttrs extends AppAttrs {
@@ -24,6 +25,9 @@ class _LightAttrs extends AppAttrs {
 
   @override
   IconData get appModeIconData => Icons.brightness_7;
+
+  @override
+  String get mapboxStyle => 'mapbox.light';
 }
 
 class _DarkAttrs extends AppAttrs {
@@ -34,4 +38,7 @@ class _DarkAttrs extends AppAttrs {
 
   @override
   IconData get appModeIconData => Icons.brightness_3;
+
+  @override
+  String get mapboxStyle => 'mapbox.dark';
 }

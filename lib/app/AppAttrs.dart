@@ -1,26 +1,24 @@
-import 'package:drinner_flutter/DrinnerApp.dart';
+import 'package:drinner_flutter/app/DrinnerApp.dart';
+import 'package:drinner_flutter/bloc/AppBloc.dart';
+import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:flutter/material.dart';
 
 abstract class AppAttrs {
-  static AppAttrs _lightAttrs = _LightAttrs();
-  static AppAttrs _darkAttrs = _DarkAttrs();
+  AppAttrs._();
 
-  static AppAttrs ofMode(AppMode appMode) {
-    switch (appMode) {
-      case AppMode.DAY:
-        return _lightAttrs;
-      case AppMode.NIGHT:
-        return _darkAttrs;
-      default:
-        throw Exception('AppAttrs requested for unknown AppMode: $appMode.');
-    }
-  }
+  factory AppAttrs(AppMode appMode) =>
+      appMode == AppMode.DAY ? _LightAttrs() : _DarkAttrs();
+
+  static AppAttrs of(BuildContext context) =>
+      BlocProvider.of<AppBloc>(context).appAttrs;
 
   Brightness get brightness;
   IconData get appModeIconData;
 }
 
 class _LightAttrs extends AppAttrs {
+  _LightAttrs() : super._();
+  
   @override
   Brightness get brightness => Brightness.light;
 
@@ -29,6 +27,8 @@ class _LightAttrs extends AppAttrs {
 }
 
 class _DarkAttrs extends AppAttrs {
+  _DarkAttrs() : super._();
+
   @override
   Brightness get brightness => Brightness.dark;
 

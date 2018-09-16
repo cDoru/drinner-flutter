@@ -1,5 +1,5 @@
-import 'package:drinner_flutter/AppAttrs.dart';
-import 'package:drinner_flutter/DrinnerApp.dart';
+import 'package:drinner_flutter/app/AppAttrs.dart';
+import 'package:drinner_flutter/app/DrinnerApp.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/rx/VoidSubject.dart';
 import 'package:rxdart/rxdart.dart';
@@ -7,6 +7,7 @@ import 'package:rxdart/rxdart.dart';
 class AppBloc extends BaseBloc {
   AppBloc() {
     switchModeEvent = VoidSubject.publish()..listen(_switchAppMode);
+    appMode.listen(_updateAttrs);
   }
 
   static const _DEFAULT_MODE = AppMode.DAY;
@@ -20,12 +21,14 @@ class AppBloc extends BaseBloc {
 
   VoidSubject switchModeEvent;
 
-  AppAttrs get appAttrs => AppAttrs.ofMode(_currentMode);
+  AppAttrs appAttrs;
 
   void _switchAppMode() {
     _currentMode = _currentMode == AppMode.DAY ? AppMode.NIGHT : AppMode.DAY;
     _modeSubject.add(_currentMode);
   }
+
+  void _updateAttrs(AppMode appMode) => appAttrs = AppAttrs(appMode);
 
   @override
   void dispose() {

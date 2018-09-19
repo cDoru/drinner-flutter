@@ -1,36 +1,94 @@
 import 'package:drinner_flutter/app/AppAttrs.dart';
-import 'package:drinner_flutter/app/AppConfig.dart';
+import 'package:drinner_flutter/bloc/BlocFactory.dart';
+import 'package:drinner_flutter/bloc/BlocProvider.dart';
+import 'package:drinner_flutter/bloc/MapBloc.dart';
+import 'package:drinner_flutter/bloc/VenuesBloc.dart';
+import 'package:drinner_flutter/common/VenueMarker.dart';
+import 'package:drinner_flutter/model/MapCamera.dart';
+import 'package:drinner_flutter/model/Venue.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart';
+import 'package:rxdart/rxdart.dart';
 
-class VenuesPage extends StatelessWidget {
-  static const _MAPBOX_TOKEN = AppConfig.MAPBOX_TOKEN;
-  static const _MAPBOX_URL =
-      'https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}@2x.png?access_token={accessToken}';
-  static const _START_LAT = 51.11;
-  static const _START_LON = 17.03;
-  static const _START_ZOOM = 11.0;
+class VenuesPage extends StatefulWidget {
+  VenuesPage(this._mapApiUrl, this._mapApiToken);
 
-  final _controller = MapController();
+  final String _mapApiToken;
+  final String _mapApiUrl;
+  final MapController _mapController = MapController();
+
+  @override
+  VenuesPageState createState() => VenuesPageState();
+}
+
+class VenuesPageState extends State<VenuesPage> {
+  VenuesBloc _venuesBloc = BlocFactory.venuesBloc;
+  MapBloc _mapBloc = BlocFactory.mapBloc;
+  Observable<_ZoomedVenues> _zoomedVenues;
+
+  @override
+  void initState() {
+    _zoomedVenues = Observable.combineLatest2(
+        _mapBloc.zoom, _venuesBloc.venues, _ZoomedVenues.create);
+    super.initState();
+  }
+
+  void _onMapMoved(MapPosition position) =>
+      _mapBloc.cameraChangedEvent.add(MapCamera(
+        lat: position.center.latitude,
+        lon: position.center.longitude,
+        zoom: position.zoom,
+      ));
 
   @override
   Widget build(BuildContext context) {
+    return BlocProvider(
+      bloc: BlocFactory.venuesBloc,
+      child: StreamBuilder(
+        stream: _zoomedVenues,
+        builder: _buildVenuesMap,
+      ),
+    );
+  }
+
+  Widget _buildVenuesMap(
+      BuildContext context, AsyncSnapshot<_ZoomedVenues> snapshot) {
+    if (snapshot.data == null) return Container();
     return FlutterMap(
-      mapController: _controller,
+      mapController: widget._mapController,
       options: MapOptions(
-        center: LatLng(_START_LAT, _START_LON),
-        zoom: _START_ZOOM,
+        onPositionChanged: _onMapMoved,
+        center: LatLng(_mapBloc.startCamera.lat, _mapBloc.startCamera.lon),
+        zoom: _mapBloc.startCamera.zoom,
       ),
       layers: <LayerOptions>[
-        TileLayerOptions(
-          urlTemplate: _MAPBOX_URL,
-          additionalOptions: {
-            'accessToken': _MAPBOX_TOKEN,
-            'id': AppAttrs.of(context).mapboxStyle,
-          },
-        ),
+        _buildMapLayer(context),
+        _buildMarkersLayer(snapshot.data.venues, snapshot.data.zoom),
       ],
     );
   }
+
+  MarkerLayerOptions _buildMarkersLayer(List<Venue> venues, double zoom) {
+    return MarkerLayerOptions(
+      markers: venues.map((it) => VenueMarker.create(it, zoom)).toList(),
+    );
+  }
+
+  TileLayerOptions _buildMapLayer(BuildContext context) {
+    return TileLayerOptions(
+      urlTemplate: widget._mapApiUrl,
+      additionalOptions: {
+        'accessToken': widget._mapApiToken,
+        'id': AppAttrs.of(context).mapboxStyle,
+      },
+    );
+  }
+}
+
+class _ZoomedVenues {
+  _ZoomedVenues(this.zoom, this.venues);
+  static _ZoomedVenues create(zoom, venues) => _ZoomedVenues(zoom, venues);
+  final double zoom;
+  final List<Venue> venues;
 }

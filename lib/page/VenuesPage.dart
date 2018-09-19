@@ -3,6 +3,7 @@ import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/MapBloc.dart';
 import 'package:drinner_flutter/bloc/VenuesBloc.dart';
+import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/common/VenueMarker.dart';
 import 'package:drinner_flutter/model/MapCamera.dart';
 import 'package:drinner_flutter/model/Venue.dart';
@@ -45,7 +46,7 @@ class VenuesPageState extends State<VenuesPage> {
   Widget build(BuildContext context) {
     return BlocProvider(
       bloc: BlocFactory.venuesBloc,
-      child: StreamBuilder(
+      child: SafeStreamBuilder(
         stream: _zoomedVenues,
         builder: _buildVenuesMap,
       ),
@@ -54,7 +55,6 @@ class VenuesPageState extends State<VenuesPage> {
 
   Widget _buildVenuesMap(
       BuildContext context, AsyncSnapshot<_ZoomedVenues> snapshot) {
-    if (snapshot.data == null) return Container();
     return FlutterMap(
       mapController: widget._mapController,
       options: MapOptions(

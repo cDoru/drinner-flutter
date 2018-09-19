@@ -2,6 +2,7 @@ import 'package:drinner_flutter/bloc/AppBloc.dart';
 import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/MainBloc.dart';
+import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/page/PageFactory.dart';
 import 'package:flutter/material.dart';
 
@@ -40,11 +41,11 @@ class _MainPageState extends State<MainPage> {
             ),
           ],
         ),
-        body: StreamBuilder(
+        body: SafeStreamBuilder(
           stream: _mainBloc.selectedTab,
           builder: _buildBody,
         ),
-        bottomNavigationBar: StreamBuilder(
+        bottomNavigationBar: SafeStreamBuilder(
           stream: _mainBloc.selectedTab,
           builder: _buildNavBar,
         ),
@@ -52,19 +53,16 @@ class _MainPageState extends State<MainPage> {
     );
   }
 
+  Widget _buildBody(BuildContext context, AsyncSnapshot<int> snapshot) =>
+      widget._bodyItems[snapshot.data];
+
   Widget _buildNavBar(BuildContext context, AsyncSnapshot<int> snapshot) {
-    if (snapshot.data == null) return Container();
     return BottomNavigationBar(
       type: BottomNavigationBarType.fixed,
       currentIndex: snapshot.data,
       items: _navBarItems,
       onTap: _mainBloc.selectTabEvent.add,
     );
-  }
-
-  Widget _buildBody(BuildContext context, AsyncSnapshot<int> snapshot) {
-    if (snapshot.data == null) return Container();
-    return widget._bodyItems[snapshot.data];
   }
 
   List<BottomNavigationBarItem> get _navBarItems => [

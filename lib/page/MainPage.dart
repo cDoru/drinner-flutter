@@ -1,18 +1,16 @@
 import 'package:drinner_flutter/bloc/AppBloc.dart';
+import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/MainBloc.dart';
-import 'package:drinner_flutter/page/HomePage.dart';
-import 'package:drinner_flutter/page/MeetingsPage.dart';
-import 'package:drinner_flutter/page/SettingsPage.dart';
-import 'package:drinner_flutter/page/VenuesPage.dart';
+import 'package:drinner_flutter/page/PageFactory.dart';
 import 'package:flutter/material.dart';
 
 class MainPage extends StatefulWidget {
   final List<Widget> _bodyItems = [
-    HomePage(),
-    MeetingsPage(),
-    VenuesPage(),
-    SettingsPage(),
+    PageFactory.homePage,
+    PageFactory.meetingsPage,
+    PageFactory.venuesPage,
+    PageFactory.settingsPage,
   ];
 
   @override
@@ -20,7 +18,7 @@ class MainPage extends StatefulWidget {
 }
 
 class _MainPageState extends State<MainPage> {
-  MainBloc _mainBloc = MainBloc();
+  MainBloc _mainBloc = BlocFactory.mainBloc;
   AppBloc _appBloc;
 
   @override

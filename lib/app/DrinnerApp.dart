@@ -2,7 +2,7 @@ import 'package:drinner_flutter/app/AppAttrs.dart';
 import 'package:drinner_flutter/bloc/AppBloc.dart';
 import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
-import 'package:drinner_flutter/page/MainPage.dart';
+import 'package:drinner_flutter/page/PageFactory.dart';
 import 'package:flutter/material.dart';
 
 enum AppMode { DAY, NIGHT }
@@ -35,7 +35,7 @@ class DrinnerApp extends StatelessWidget {
         brightness: AppAttrs.of(context).brightness,
         primarySwatch: Colors.green,
       ),
-      home: MainPage(),
+      home: PageFactory.mainPage,
     );
   }
 }

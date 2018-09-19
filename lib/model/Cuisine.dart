@@ -1,0 +1,12 @@
+enum Cuisine {
+  VEGAN,
+  VEGETARIAN,
+  SUSHI,
+  REGIONAL,
+  POLISH,
+  JAPANESE,
+  KOREAN,
+  ITALIAN,
+  PANCAKES,
+  ASIAN,
+}

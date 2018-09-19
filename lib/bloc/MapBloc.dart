@@ -6,6 +6,8 @@ class MapBloc extends BaseBloc {
   static const double _START_LAT = 51.11;
   static const double _START_LON = 17.03;
   static const double _START_ZOOM = 11.0;
+  static const double _MIN_ZOOM = 8.0;
+  static const double _MAX_ZOOM = 19.0;
   static const MapCamera _START_CAMERA =
       MapCamera(lat: _START_LAT, lon: _START_LON, zoom: _START_ZOOM);
 
@@ -18,6 +20,8 @@ class MapBloc extends BaseBloc {
       .distinct();
 
   MapCamera get startCamera => _START_CAMERA;
+  double get minZoom => _MIN_ZOOM;
+  double get maxZoom => _MAX_ZOOM;
 
   @override
   void dispose() {

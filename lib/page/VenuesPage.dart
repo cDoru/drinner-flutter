@@ -61,6 +61,8 @@ class VenuesPageState extends State<VenuesPage> {
         onPositionChanged: _onMapMoved,
         center: LatLng(_mapBloc.startCamera.lat, _mapBloc.startCamera.lon),
         zoom: _mapBloc.startCamera.zoom,
+        minZoom: _mapBloc.minZoom,
+        maxZoom: _mapBloc.maxZoom,
       ),
       layers: <LayerOptions>[
         _buildMapLayer(context),

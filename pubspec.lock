@@ -93,10 +93,12 @@ packages:
   flutter_map:
     dependency: "direct main"
     description:
-      name: flutter_map
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.3"
+      path: "."
+      ref: HEAD
+      resolved-ref: "459094459f2a3622a46040612738272d9350daa5"
+      url: "https://github.com/tomwyr/flutter_map"
+    source: git
+    version: "0.1.4"
   flutter_test:
     dependency: "direct dev"
     description: flutter
@@ -263,6 +265,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.3.6"
+  positioned_tap_detector:
+    dependency: transitive
+    description:
+      name: positioned_tap_detector
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.1"
   pub_semver:
     dependency: transitive
     description:

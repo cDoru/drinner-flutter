@@ -37,7 +37,7 @@ class FakeApiImpl extends DrinnerApi {
         [Cuisine.JAPANESE, Cuisine.KOREAN, Cuisine.SUSHI]),
     Venue("Trattoria Pesto", GeoPoint(lat: 51.1115553, lon: 17.0334811),
         [Cuisine.ITALIAN]),
-    Venue("Pattie's", GeoPoint(lat: 17.0322107, lon: 17.0334811),
+    Venue("Pattie's", GeoPoint(lat: 51.1114546, lon: 17.0334811),
         [Cuisine.PANCAKES]),
     Venue("Kurna Chata", GeoPoint(lat: 51.1130591, lon: 17.0317662),
         [Cuisine.POLISH]),

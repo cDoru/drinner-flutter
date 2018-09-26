@@ -72,6 +72,7 @@ class VenuesPageState extends State<VenuesPage> {
   }
 
   MarkerLayerOptions _buildMarkersLayer(List<Venue> venues, double zoom) {
+    venues.sort((v1, v2) => (v2.location.lat - v1.location.lat).ceil());
     return MarkerLayerOptions(
       markers: venues.map((it) => VenueMarker.create(it, zoom)).toList(),
     );

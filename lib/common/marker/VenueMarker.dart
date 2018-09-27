@@ -7,17 +7,71 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong/latlong.dart' show LatLng;
 
-class VenueMarker {
-  VenueMarker._(this._venue, this._zoom) {
-    _size = _calcMarkerSize();
+class VenueMarker extends Marker {
+  VenueMarker._(this.venue, double size, WidgetBuilder builder)
+      : super(
+          width: size,
+          height: size,
+          anchor: AnchorPos.top,
+          point: LatLng(venue.location.lat, venue.location.lon),
+          builder: builder,
+        );
+
+  factory VenueMarker.create(Venue venue, double zoom) {
+    final dims = _VenueMarkerDims(zoom);
+    final builder = _VenueMarkerBuilder(dims, venue);
+    return VenueMarker._(venue, dims.size, builder.buildMarker);
   }
 
-  static Marker create(Venue venue, double zoom) =>
-      VenueMarker._(venue, zoom).marker;
+  Venue venue;
+}
+
+class _VenueMarkerBuilder {
+  _VenueMarkerBuilder(this._dims, this._venue);
 
   Venue _venue;
-  double _zoom;
-  double _size;
+  _VenueMarkerDims _dims;
+
+  Cuisine get _cuisine =>
+      _venue.cuisines.isNotEmpty ? _venue.cuisines.first : Cuisine.UNKNOWN;
+
+  Widget buildMarker(BuildContext context) {
+    return Stack(children: [
+      Positioned.fill(child: _buildBubble()),
+      Positioned(
+        top: 0.0,
+        left: 0.0,
+        right: 0.0,
+        child: _buildImage(),
+      ),
+    ]);
+  }
+
+  Padding _buildImage() {
+    return Padding(
+      padding: EdgeInsets.all(_dims.imagePadding),
+      child: Image.asset(
+        'images/food/${_cuisine.image}.png',
+        color: Colors.white,
+        height: _dims.imageHeight,
+        colorBlendMode: BlendMode.srcATop,
+      ),
+    );
+  }
+
+  Widget _buildBubble() {
+    return CustomPaint(
+      painter: VenueMarkerBubblePainter(
+        footHeightRatio: _dims.footHeightRatio,
+        color: _cuisine.color,
+      ),
+      size: Size(_dims.size, _dims.size),
+    );
+  }
+}
+
+class _VenueMarkerDims {
+  _VenueMarkerDims(this._zoom);
 
   final _minZoom = 1.0;
   final _maxZoom = 20.0;
@@ -26,42 +80,13 @@ class VenueMarker {
   final _imageHeightRatio = 0.75;
   final _imagePaddingRatio = 0.1;
 
-  double get _imageHeight => _size * _imageHeightRatio;
-  double get _imagePadding => _size * _imagePaddingRatio;
-  Cuisine get _cuisine =>
-      _venue.cuisines.isNotEmpty ? _venue.cuisines.first : Cuisine.UNKNOWN;
+  double _zoom;
+  double _size;
 
-  Marker get marker {
-    return Marker(
-      width: _size,
-      height: _size,
-      anchor: AnchorPos.top,
-      point: LatLng(_venue.location.lat, _venue.location.lon),
-      builder: (_) => Stack(children: [
-            CustomPaint(
-              painter: VenueMarkerBubblePainter(
-                footHeightRatio: 1 - _imageHeightRatio,
-                color: _cuisine.color,
-              ),
-              size: Size(_size, _size),
-            ),
-            Positioned(
-              top: 0.0,
-              left: 0.0,
-              right: 0.0,
-              child: Padding(
-                padding: EdgeInsets.all(_imagePadding),
-                child: Image.asset(
-                  'images/food/${_cuisine.image}.png',
-                  color: Colors.white,
-                  height: _imageHeight - 2 * _imagePadding,
-                  colorBlendMode: BlendMode.srcATop,
-                ),
-              ),
-            ),
-          ]),
-    );
-  }
+  double get size => _size ??= _calcMarkerSize();
+  double get footHeightRatio => 1 - _imageHeightRatio;
+  double get imageHeight => size * _imageHeightRatio - 2 * imagePadding;
+  double get imagePadding => size * _imagePaddingRatio;
 
   double _calcMarkerSize() {
     final exponent = 4.0;

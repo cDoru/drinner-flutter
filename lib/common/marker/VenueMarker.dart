@@ -12,25 +12,25 @@ class VenueMarker extends Marker {
       : super(
           width: size,
           height: size,
-          anchor: AnchorPos.top,
+          anchorPos: AnchorPos.align(AnchorAlign.top),
           point: LatLng(venue.location.lat, venue.location.lon),
           builder: builder,
         );
 
-  factory VenueMarker.create(Venue venue, double zoom) {
-    final dims = _VenueMarkerDims(zoom);
-    final builder = _VenueMarkerBuilder(dims, venue);
-    return VenueMarker._(venue, dims.size, builder.buildMarker);
+  factory VenueMarker(Venue venue, double zoom) {
+    final dimens = _VenueMarkerDimens(zoom);
+    final builder = _VenueMarkerBuilder(dimens, venue);
+    return VenueMarker._(venue, dimens.size, builder.buildMarker);
   }
 
   Venue venue;
 }
 
 class _VenueMarkerBuilder {
-  _VenueMarkerBuilder(this._dims, this._venue);
+  _VenueMarkerBuilder(this._dimens, this._venue);
 
-  Venue _venue;
-  _VenueMarkerDims _dims;
+  final Venue _venue;
+  final _VenueMarkerDimens _dimens;
 
   Cuisine get _cuisine =>
       _venue.cuisines.isNotEmpty ? _venue.cuisines.first : Cuisine.UNKNOWN;
@@ -49,11 +49,11 @@ class _VenueMarkerBuilder {
 
   Padding _buildImage() {
     return Padding(
-      padding: EdgeInsets.all(_dims.imagePadding),
+      padding: EdgeInsets.all(_dimens.imagePadding),
       child: Image.asset(
         'images/food/${_cuisine.image}.png',
         color: Colors.white,
-        height: _dims.imageHeight,
+        height: _dimens.imageHeight,
         colorBlendMode: BlendMode.srcATop,
       ),
     );
@@ -62,16 +62,16 @@ class _VenueMarkerBuilder {
   Widget _buildBubble() {
     return CustomPaint(
       painter: VenueMarkerBubblePainter(
-        footHeightRatio: _dims.footHeightRatio,
+        footHeightRatio: _dimens.footHeightRatio,
         color: _cuisine.color,
       ),
-      size: Size(_dims.size, _dims.size),
+      size: Size(_dimens.size, _dimens.size),
     );
   }
 }
 
-class _VenueMarkerDims {
-  _VenueMarkerDims(this._zoom);
+class _VenueMarkerDimens {
+  _VenueMarkerDimens(this._zoom);
 
   final _minZoom = 1.0;
   final _maxZoom = 20.0;

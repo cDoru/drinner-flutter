@@ -5,7 +5,7 @@ import 'package:rxdart/rxdart.dart';
 class MapBloc extends BaseBloc {
   static const double _START_LAT = 51.11;
   static const double _START_LON = 17.03;
-  static const double _START_ZOOM = 11.0;
+  static const double _START_ZOOM = 15.0;
   static const double _MIN_ZOOM = 8.0;
   static const double _MAX_ZOOM = 19.0;
   static const MapCamera _START_CAMERA =

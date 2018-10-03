@@ -1,11 +1,10 @@
-import 'package:drinner_flutter/common/map/animated/layer.dart';
+import 'package:drinner_flutter/common/map/animated_marker/layer.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/plugin_api.dart';
 
 export './layer.dart' show AnimatedMarkerLayerController;
 
 typedef bool Predicate<T>(T item);
-typedef Animation<T> AnimationBuilder<T>(AnimationController animator);
 typedef K Identifier<T, K>(T item);
 
 class AnimatedMarkerPlugin extends MapPlugin {
@@ -18,7 +17,7 @@ class AnimatedMarkerPlugin extends MapPlugin {
       options is AnimatedMarkerLayerOptions;
 }
 
-class AnimatedMarkerLayerOptions<T extends Marker> extends LayerOptions {
+class AnimatedMarkerLayerOptions extends LayerOptions {
   AnimatedMarkerLayerOptions({
     @required this.markers,
     @required this.identifier,
@@ -36,9 +35,9 @@ class AnimatedMarkerLayerOptions<T extends Marker> extends LayerOptions {
         scale: Tween(begin: 0.0, end: 1.0).animate(animator),
       );
 
-  final List<T> markers;
+  final List<Marker> markers;
   final MarkerTapCallback onTap;
-  final Identifier<T, Object> identifier;
+  final Identifier<Marker, Object> identifier;
   final AnimatedMarkerLayerController controller;
   final Duration animDuration;
   // NOTE: marker widget is placed in the tree underneath Positioned widget

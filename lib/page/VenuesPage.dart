@@ -4,7 +4,7 @@ import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/MapBloc.dart';
 import 'package:drinner_flutter/bloc/VenuesBloc.dart';
 import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
-import 'package:drinner_flutter/common/map/animated/plugin.dart';
+import 'package:drinner_flutter/common/map/animated_marker/plugin.dart';
 import 'package:drinner_flutter/common/marker/VenueMarker.dart';
 import 'package:drinner_flutter/model/MapCamera.dart';
 import 'package:drinner_flutter/model/Venue.dart';
@@ -79,9 +79,9 @@ class VenuesPageState extends State<VenuesPage> {
     venues.sort((v1, v2) => (v2.location.lat - v1.location.lat).ceil());
     return AnimatedMarkerLayerOptions(
       markers: venues.map((it) => VenueMarker(it, zoom)).toList(),
-      identifier: (marker) => marker.venue.name,
+      identifier: (marker) => (marker as VenueMarker).venue.name,
       controller: widget._markerController,
-      onTap: (it) => widget._markerController.toggle(it),
+      onTap: widget._markerController.toggle,
       animDuration: Duration(milliseconds: 500),
       animBuilder: (context, child, animator) => ScaleTransition(
             scale: Tween(begin: 0.5, end: 1.0).animate(animator),

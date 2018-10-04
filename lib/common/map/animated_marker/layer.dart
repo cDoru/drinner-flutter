@@ -8,23 +8,17 @@ class AnimatedMarkerLayerController {
   _AnimatedMarkerLayerState _state;
 
   void show(Marker marker) => _state?._showMarkers([marker]);
-
   void showAll(List<Marker> markers) => _state?._showMarkers(markers);
-
   void showWhere(Predicate<Marker> predicate) =>
       _state?._showMarkers(_state._markers.where(predicate).toList());
 
   void hide(Marker marker) => _state?._hideMarkers([marker]);
-
   void hideAll(List<Marker> markers) => _state?._hideMarkers(markers);
-
   void hideWhere(Predicate<Marker> predicate) =>
       _state?._hideMarkers(_state._markers.where(predicate).toList());
 
   void toggle(Marker marker) => _state?._toggleMarkers([marker]);
-
   void toggleAll(List<Marker> markers) => _state?._toggleMarkers(markers);
-
   void toggleWhere(Predicate<Marker> predicate) =>
       _state?._toggleMarkers(_state._markers.where(predicate).toList());
 
@@ -44,7 +38,7 @@ class AnimatedMarkerLayer extends StatefulWidget {
 class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
     with TickerProviderStateMixin {
   AnimationController _staticAnimator;
-  CachingBuilder<_AnimDirectedMarker, AnimationController> _animatorBuilder;
+  CachingBuilder _animatorBuilder;
 
   AnimatedMarkerLayerOptions get _options => widget.options;
   List<Marker> get _markers => widget.options.markers;
@@ -53,9 +47,12 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
   void initState() {
     super.initState();
     _staticAnimator = AnimationController(vsync: this, value: 1.0);
-    _animatorBuilder =
-        CachingBuilder(_createAnimator, _shouldAnimate, _staticAnimator);
+    _animatorBuilder = AnimatorCachingBuilder(
+        this, _options.animDuration, _identifyMarker, _staticAnimator);
   }
+
+  Object _identifyMarker(AnimDirectedMarker directedMarker) =>
+      _options.identifier(directedMarker.marker);
 
   @override
   void dispose() {
@@ -67,7 +64,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
     final toShow = List<Marker>();
     final toHide = List<Marker>();
     markers.forEach((it) {
-      final status = _animatorBuilder[_AnimDirectedMarker(it)]?.status;
+      final status = _animatorBuilder[AnimDirectedMarker(it)]?.status;
       final shouldShow = status == AnimationStatus.reverse ||
           status == AnimationStatus.dismissed;
       shouldShow ? toShow.add(it) : toHide.add(it);
@@ -77,57 +74,27 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
   }
 
   void _showMarkers(List<Marker> markers) =>
-      _animateMarkers(markers, _AnimationDirection.FORWARD);
+      _animateMarkers(markers, AnimDirection.FORWARD);
 
   void _hideMarkers(List<Marker> markers) =>
-      _animateMarkers(markers, _AnimationDirection.REVERSE);
+      _animateMarkers(markers, AnimDirection.REVERSE);
 
-  void _animateMarkers(List<Marker> markers, _AnimationDirection direction) {
+  void _animateMarkers(List<Marker> markers, AnimDirection direction) {
     if (markers.isEmpty) return;
+    final isForward = direction == AnimDirection.FORWARD;
     markers
-        .map((it) => _AnimDirectedMarker(it, direction))
+        .map((it) => AnimDirectedMarker(it, direction))
         .forEach(_animatorBuilder.request);
     _animatorBuilder.collect().forEach((it) {
-      _isForward(direction) ? it.forward() : it.reverse();
+      isForward ? it.forward() : it.reverse();
     });
     setState(() {});
-  }
-
-  bool _isForward(_AnimationDirection direction) =>
-      direction == _AnimationDirection.FORWARD;
-
-  bool _shouldAnimate(
-      _AnimDirectedMarker directedMarker, AnimationController previous) {
-    final status = previous.status;
-    final isForward = directedMarker.direction == _AnimationDirection.FORWARD;
-    return isForward
-        ? status == AnimationStatus.dismissed ||
-            status == AnimationStatus.reverse
-        : status == AnimationStatus.completed ||
-            status == AnimationStatus.forward;
-  }
-
-  AnimationController _createAnimator(
-      _AnimDirectedMarker directedMarker, AnimationController previous) {
-    final isForward = _isForward(directedMarker.direction);
-    final endStatus =
-        isForward ? AnimationStatus.completed : AnimationStatus.dismissed;
-    final value = previous?.value ?? (isForward ? 0.0 : 1.0);
-    final animator = AnimationController(
-      duration: _options.animDuration,
-      value: value,
-      vsync: this,
-    );
-    animator.addStatusListener((it) {
-      if (it == endStatus) animator.dispose();
-    });
-    return animator;
   }
 
   @override
   Widget build(BuildContext context) {
     _options.controller?._init(this);
-    final markersSwitch = Map();
+    final markersSwitch = Map<Marker, Marker>();
     final markers =
         _markers.map((it) => _createAnimatedMarker(it, markersSwitch)).toList();
     final options = MarkerLayerOptions(
@@ -137,10 +104,10 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
     return MarkerLayer(options, widget.mapState);
   }
 
-  Marker _createAnimatedMarker(Marker marker, Map _markersSwitch) {
-    final animator = _animatorBuilder[_AnimDirectedMarker(marker)];
+  Marker _createAnimatedMarker(Marker marker, Map markersSwitch) {
+    final animator = _animatorBuilder[AnimDirectedMarker(marker)];
     final animMarker = _cloneMarkerWithAnimator(marker, animator);
-    _markersSwitch[animMarker] = marker;
+    markersSwitch[animMarker] = marker;
     return animMarker;
   }
 
@@ -156,11 +123,4 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
   }
 }
 
-enum _AnimationDirection { FORWARD, REVERSE, UNSPEC }
-
-class _AnimDirectedMarker {
-  _AnimDirectedMarker(this.marker,
-      [this.direction = _AnimationDirection.UNSPEC]);
-  final Marker marker;
-  final _AnimationDirection direction;
-}
+enum AnimDirection { FORWARD, REVERSE, UNSPEC }

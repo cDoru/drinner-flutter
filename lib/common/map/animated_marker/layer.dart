@@ -99,7 +99,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
         _markers.map((it) => _createAnimatedMarker(it, markersSwitch)).toList();
     final options = MarkerLayerOptions(
       markers: markers,
-      onTap: (it) => _options.onTap(markersSwitch[it]),
+      onTap: (it) => _options.onTap?.call(markersSwitch[it],),
     );
     return MarkerLayer(options, widget.mapState);
   }

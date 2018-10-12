@@ -8,19 +8,19 @@ class AnimatedMarkerLayerController {
   _AnimatedMarkerLayerState _state;
 
   void show(Marker marker) => _state?._showMarkers([marker]);
-  void showAll(List<Marker> markers) => _state?._showMarkers(markers);
+  void showAll(Iterable<Marker> markers) => _state?._showMarkers(markers);
   void showWhere(Predicate<Marker> predicate) =>
-      _state?._showMarkers(_state._markers.where(predicate).toList());
+      _state?._showMarkers(_state._markers.where(predicate));
 
   void hide(Marker marker) => _state?._hideMarkers([marker]);
-  void hideAll(List<Marker> markers) => _state?._hideMarkers(markers);
+  void hideAll(Iterable<Marker> markers) => _state?._hideMarkers(markers);
   void hideWhere(Predicate<Marker> predicate) =>
-      _state?._hideMarkers(_state._markers.where(predicate).toList());
+      _state?._hideMarkers(_state._markers.where(predicate));
 
   void toggle(Marker marker) => _state?._toggleMarkers([marker]);
-  void toggleAll(List<Marker> markers) => _state?._toggleMarkers(markers);
+  void toggleAll(Iterable<Marker> markers) => _state?._toggleMarkers(markers);
   void toggleWhere(Predicate<Marker> predicate) =>
-      _state?._toggleMarkers(_state._markers.where(predicate).toList());
+      _state?._toggleMarkers(_state._markers.where(predicate));
 
   void _init(_AnimatedMarkerLayerState state) => _state = state;
 }
@@ -41,12 +41,13 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
   CachingBuilder _animatorBuilder;
 
   AnimatedMarkerLayerOptions get _options => widget.options;
-  List<Marker> get _markers => widget.options.markers;
+  Iterable<Marker> get _markers => widget.options.markers;
 
   @override
   void initState() {
     super.initState();
-    _staticAnimator = AnimationController(vsync: this, value: 1.0);
+    _staticAnimator = AnimationController(
+        vsync: this, value: _options.startHidden ? 0.0 : 1.0);
     _animatorBuilder = AnimatorCachingBuilder(
         this, _options.animDuration, _identifyMarker, _staticAnimator);
   }
@@ -60,7 +61,7 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
     super.dispose();
   }
 
-  void _toggleMarkers(List<Marker> markers) {
+  void _toggleMarkers(Iterable<Marker> markers) {
     final toShow = List<Marker>();
     final toHide = List<Marker>();
     markers.forEach((it) {
@@ -73,13 +74,13 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
     _hideMarkers(toHide);
   }
 
-  void _showMarkers(List<Marker> markers) =>
+  void _showMarkers(Iterable<Marker> markers) =>
       _animateMarkers(markers, AnimDirection.FORWARD);
 
-  void _hideMarkers(List<Marker> markers) =>
+  void _hideMarkers(Iterable<Marker> markers) =>
       _animateMarkers(markers, AnimDirection.REVERSE);
 
-  void _animateMarkers(List<Marker> markers, AnimDirection direction) {
+  void _animateMarkers(Iterable<Marker> markers, AnimDirection direction) {
     if (markers.isEmpty) return;
     final isForward = direction == AnimDirection.FORWARD;
     markers
@@ -99,7 +100,9 @@ class _AnimatedMarkerLayerState extends State<AnimatedMarkerLayer>
         _markers.map((it) => _createAnimatedMarker(it, markersSwitch)).toList();
     final options = MarkerLayerOptions(
       markers: markers,
-      onTap: (it) => _options.onTap?.call(markersSwitch[it],),
+      onTap: (it) => _options.onTap?.call(
+            markersSwitch[it],
+          ),
     );
     return MarkerLayer(options, widget.mapState);
   }

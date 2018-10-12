@@ -23,18 +23,18 @@ class AnimatedMarkerLayerOptions extends LayerOptions {
     @required this.identifier,
     this.onTap,
     this.controller,
-    Duration animDuration,
+    this.startHidden = true,
+    this.animDuration = const Duration(milliseconds: 500),
     MarkerTransitionBuilder animBuilder,
-  })  : this.animBuilder = animBuilder ?? defaultBuilder,
-        this.animDuration = animDuration ?? defaultDuration;
+  }) : this.animBuilder = animBuilder ?? defaultBuilder;
 
-  static final defaultDuration = Duration(milliseconds: 500);
   static final defaultBuilder = (context, child, animator) => ScaleTransition(
         alignment: Alignment.bottomCenter,
         child: child,
         scale: Tween(begin: 0.0, end: 1.0).animate(animator),
       );
 
+  final bool startHidden;
   final List<Marker> markers;
   final MarkerTapCallback onTap;
   final Identifier<Marker, Object> identifier;

@@ -17,10 +17,12 @@ class SpaceFitMarkerLayerOptions extends LayerOptions {
   SpaceFitMarkerLayerOptions({
     @required this.animOptions,
     this.interval = const Duration(seconds: 5),
+    this.showOffBounds = true,
     this.limit = 0,
   }) : assert(limit >= 0);
 
   final AnimatedMarkerLayerOptions animOptions;
   final Duration interval;
+  final bool showOffBounds;
   final int limit;
 }

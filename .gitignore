@@ -11,5 +11,4 @@ build/
 .idea/libraries/Flutter_for_Android.xml
 .vscode/settings.json
 
-lib/app/AppConfig.dart
 images/

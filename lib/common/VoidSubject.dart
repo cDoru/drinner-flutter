@@ -2,25 +2,38 @@ import 'dart:async';
 
 import 'package:rxdart/rxdart.dart';
 
-class VoidSubject {
-  VoidSubject._(this._subjectDelegate);
+class VoidSubject extends VoidObservable {
+  const VoidSubject._(this._subject) : super._(_subject);
 
   factory VoidSubject.publish() => VoidSubject._(PublishSubject());
   factory VoidSubject.behavior() => VoidSubject._(BehaviorSubject());
   factory VoidSubject.replay() => VoidSubject._(ReplaySubject());
 
-  Subject<void> _subjectDelegate;
+  final Subject<void> _subject;
 
-  void add() => _subjectDelegate.add(null);
+  void add() => _subject.add(null);
+  Future<dynamic> close() => _subject.close();
+}
 
-  StreamSubscription<void> listen(Function onNext,
-          {Function onError, void onDone(), bool cancelOnError}) =>
-      _subjectDelegate.listen(
+class VoidObservable {
+  const VoidObservable._(this._observable);
+
+  final Observable<void> _observable;
+
+  StreamSubscription<void> listen(
+    VoidFunc onNext, {
+    Function onError,
+    void onDone(),
+    bool cancelOnError,
+  }) =>
+      _observable.listen(
         (_) => onNext(),
         onError: onError,
         onDone: onDone,
         cancelOnError: cancelOnError,
       );
 
-  Future<dynamic> close() => _subjectDelegate.close();
+  Observable<R> withLatestFrom<S, R>(Stream<S> stream, R fn(void v, S s)) =>
+      _observable.withLatestFrom(stream, fn);
+  Observable<S> map<S>(S convert()) => _observable.map((_) => convert());
 }

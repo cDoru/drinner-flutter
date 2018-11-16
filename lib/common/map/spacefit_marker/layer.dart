@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:drinner_flutter/common/VoidSubject.dart';
 import 'package:drinner_flutter/common/map/animated_marker/layer.dart';
 import 'package:drinner_flutter/common/map/animated_marker/plugin.dart';
 import 'package:drinner_flutter/common/map/spacefit_marker/plugin.dart';

@@ -1,16 +1,29 @@
+import 'dart:math';
+import 'dart:typed_data';
+
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/model/BBox.dart';
 import 'package:drinner_flutter/model/City.dart';
 import 'package:drinner_flutter/model/Venue.dart';
 import 'package:drinner_flutter/model/GeoPoint.dart';
 import 'package:drinner_flutter/model/Cuisine.dart';
+import 'package:flutter/services.dart';
 
 class FakeApiImpl extends DrinnerApi {
   @override
-  List<City> getCities() => _cities;
+  Future<List<City>> getCities() => Future.value(_cities);
 
   @override
-  List<Venue> getCityVenues(String city) => _venues;
+  Future<List<Venue>> getCityVenues(String city) => Future.value(_venues);
+
+  @override
+  Future<int> getRandomAvatarId() => Future.delayed(
+      Duration(milliseconds: 300), () => 1 + Random().nextInt(10));
+
+  @override
+  Future<Uint8List> getAvatar(int id) => rootBundle
+      .load('images/avatars/$id.png')
+      .then((it) => Uint8List.view(it.buffer));
 
   final List<City> _cities = [
     City("Wrocław",

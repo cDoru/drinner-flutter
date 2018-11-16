@@ -1,7 +1,9 @@
 import 'dart:async';
 
 import 'package:drinner_flutter/model/User.dart';
+import 'package:rxdart/rxdart.dart';
 
 abstract class DrinnerPrefs {
-  Future<User> getUser();
+  Observable<User> getUser();
+  Future<bool> saveUser(User user);
 }

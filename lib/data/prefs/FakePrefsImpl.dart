@@ -18,10 +18,16 @@ class FakePrefsImpl extends DrinnerPrefs {
   final Subject<User> _userSubject = BehaviorSubject();
 
   @override
+  void dispose() {
+    _userSubject.close();
+  }
+
+  @override
   Observable<User> getUser() => _userSubject;
 
   @override
   Future<bool> saveUser(User user) async {
+    await Future.delayed(Duration(seconds: 3));
     _user = user;
     _emitUser();
     return true;

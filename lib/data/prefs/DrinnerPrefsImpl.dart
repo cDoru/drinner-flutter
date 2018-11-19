@@ -14,9 +14,14 @@ class DrinnerPrefsImpl extends DrinnerPrefs {
   static const USER_CITY_KEY = 'userCity';
   static const USER_AVATAR_ID = 'userAvatarId';
 
-  final Subject<User> _userSubject = BehaviorSubject();
+  Subject<User> _userSubject = BehaviorSubject();
 
   Future<SharedPreferences> get _prefs => SharedPreferences.getInstance();
+
+  @override
+  void dispose() {
+    _userSubject.close();
+  }
 
   void _initUser() {
     _prefs

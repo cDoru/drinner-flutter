@@ -7,8 +7,9 @@ import 'package:rxdart/rxdart.dart';
 
 class VenuesBloc extends BaseBloc {
   VenuesBloc(this._drinnerPrefs, this._drinnerApi) {
-    venues = _userSubject.map(_mapUserToVenues);
-    _initUser();
+    venues =
+        _userSubject.map((it) => it.city).asyncMap(_drinnerApi.getCityVenues);
+    _drinnerPrefs.getUser().listen(_userSubject.add);
   }
 
   final DrinnerPrefs _drinnerPrefs;
@@ -20,13 +21,5 @@ class VenuesBloc extends BaseBloc {
   @override
   void dispose() {
     _userSubject.close();
-  }
-
-  List<Venue> _mapUserToVenues(User user) =>
-      _drinnerApi.getCityVenues(user.city);
-
-  void _initUser() async {
-    final user = await _drinnerPrefs.getUser();
-    _userSubject.add(user);
   }
 }

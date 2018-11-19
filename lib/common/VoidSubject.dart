@@ -33,7 +33,14 @@ class VoidObservable {
         cancelOnError: cancelOnError,
       );
 
+  static VoidObservable merge(Iterable<VoidSubject> subjects) {
+    final merged = Observable.merge(subjects.map((it) => it._observable));
+    return VoidObservable._(merged);
+  }
+
   Observable<R> withLatestFrom<S, R>(Stream<S> stream, R fn(void v, S s)) =>
       _observable.withLatestFrom(stream, fn);
   Observable<S> map<S>(S convert()) => _observable.map((_) => convert());
+  Observable<S> asyncMap<S>(FutureOr<S> convert()) =>
+      _observable.asyncMap((_) => convert());
 }

@@ -2,7 +2,7 @@ import 'package:drinner_flutter/app/AppAttrs.dart';
 import 'package:drinner_flutter/bloc/AppBloc.dart';
 import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
-import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
+import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/page/PageFactory.dart';
 import 'package:flutter/material.dart';
 

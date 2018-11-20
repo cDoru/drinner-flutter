@@ -3,7 +3,7 @@ import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/MapBloc.dart';
 import 'package:drinner_flutter/bloc/VenuesBloc.dart';
-import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
+import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/common/map/animated_marker/plugin.dart';
 import 'package:drinner_flutter/common/marker/VenueMarker.dart';
 import 'package:drinner_flutter/model/MapCamera.dart';

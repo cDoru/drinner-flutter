@@ -1,7 +1,7 @@
 import 'package:drinner_flutter/app/AppAttrs.dart';
 import 'package:drinner_flutter/app/DrinnerApp.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
-import 'package:drinner_flutter/common/VoidSubject.dart';
+import 'package:drinner_flutter/common/rx/VoidSubject.dart';
 import 'package:rxdart/rxdart.dart';
 
 class AppBloc extends BaseBloc {

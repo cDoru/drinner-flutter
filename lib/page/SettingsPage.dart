@@ -5,7 +5,7 @@ import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
 import 'package:drinner_flutter/bloc/SettingsBloc.dart';
 import 'package:drinner_flutter/common/EditValueDialog.dart';
-import 'package:drinner_flutter/common/SafeStreamBuilder.dart';
+import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/common/view_state/ViewState.dart';
 import 'package:drinner_flutter/common/view_state/ViewStateWidget.dart';
 import 'package:flutter/material.dart';

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
-import 'package:drinner_flutter/common/VoidSubject.dart';
+import 'package:drinner_flutter/common/rx/VoidSubject.dart';
 import 'package:drinner_flutter/common/view_state/ViewState.dart';
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/data/prefs/DrinnerPrefs.dart';

@@ -1,4 +1,4 @@
-import 'package:drinner_flutter/common/Disposable.dart';
+import 'package:drinner_flutter/common/rx/Disposable.dart';
 import 'package:flutter/material.dart';
 
 abstract class BaseBloc with Disposable {}

@@ -31,7 +31,6 @@ class SettingsBloc extends BaseBloc {
   VoidSubject editCityInput = VoidSubject.publish();
   Subject<String> updateNameInput = PublishSubject();
   Subject<String> updateCityInput = PublishSubject();
-
   Subject<SettingsAvatar> _currentRandomAvatar = BehaviorSubject();
   Subject<SettingsAvatar> _currentUserAvatar = BehaviorSubject();
   Subject<SettingsAvatar> _currentAvatar = BehaviorSubject();
@@ -44,7 +43,6 @@ class SettingsBloc extends BaseBloc {
       editNameInput.withLatestFrom(_user, (_, User user) => user.name);
   Observable<String> get editCityValue =>
       editCityInput.withLatestFrom(_user, (_, User user) => user.city);
-
   Observable<User> get _user => _drinnerPrefs.getUser();
 
   @override
@@ -65,6 +63,11 @@ class SettingsBloc extends BaseBloc {
   }
 
   void _initAvatarStreams() {
+    _initRandomAndUserAvatarStream();
+    _initCurrentAvatarStream();
+  }
+
+  void _initRandomAndUserAvatarStream() {
     _currentRandomAvatarSub = changeAvatarInput
         .flatMap(_getNextAvatarId)
         .flatMap((it) => _getSettingsAvatar(it, true))
@@ -74,51 +77,6 @@ class SettingsBloc extends BaseBloc {
         .distinct()
         .flatMap((it) => _getSettingsAvatar(it, false))
         .listen(_currentUserAvatar.add);
-
-    final _rejectRandomAvatar = rejectAvatarInput.withLatestFrom(
-        _currentUserAvatar, (_, SettingsAvatar avatar) => avatar);
-    _currentAvatarSub = Observable.merge([
-      _currentRandomAvatar,
-      _currentUserAvatar,
-      _rejectRandomAvatar,
-    ]).listen(_currentAvatar.add);
-  }
-
-  void _initViewObservables() {
-    final _avatarInput = VoidObservable.merge([
-      changeAvatarInput,
-      acceptAvatarInput,
-      rejectAvatarInput,
-    ]);
-    userAvatar = Observable.merge([
-      _avatarInput.map(() => LoadingState()),
-      _currentAvatar.map(DataState.create),
-    ]);
-
-    userName = Observable.merge([
-      updateNameInput.map((_) => LoadingState()),
-      _user.map((it) => it.name).distinct().map(DataState.create),
-    ]);
-    userCity = Observable.merge([
-      updateCityInput.map((_) => LoadingState()),
-      _user.map((it) => it.city).distinct().map(DataState.create),
-    ]);
-
-    final _acceptRandomAvatar = acceptAvatarInput.withLatestFrom(
-        _currentRandomAvatar, (_, SettingsAvatar avatar) => avatar);
-    final pendingUser = Observable.merge([
-      updateNameInput.map((it) => User(name: it)),
-      updateCityInput.map((it) => User(city: it)),
-      _acceptRandomAvatar.map((it) => User(avatarId: it.id)),
-    ]);
-    userSaveResult = pendingUser
-        .withLatestFrom(_user, _copyLatestUser)
-        .asyncMap(_drinnerPrefs.saveUser);
-  }
-
-  Observable<SettingsAvatar> _getSettingsAvatar(int id, bool isRandom) {
-    return Observable.fromFuture(_drinnerApi.getAvatar(id))
-        .map((it) => SettingsAvatar(id, it, isRandom));
   }
 
   Observable<int> _getNextAvatarId() {
@@ -137,6 +95,63 @@ class SettingsBloc extends BaseBloc {
   int _retainIdIfChanged(int id, Twin<SettingsAvatar> avatars) {
     final changed = id != avatars.first.id && id != avatars.second.id;
     return changed ? id : null;
+  }
+
+  Observable<SettingsAvatar> _getSettingsAvatar(int id, bool isRandom) {
+    return Observable.fromFuture(_drinnerApi.getAvatar(id))
+        .map((it) => SettingsAvatar(id, it, isRandom));
+  }
+
+  void _initCurrentAvatarStream() {
+    final _rejectRandomAvatar = rejectAvatarInput.withLatestFrom(
+        _currentUserAvatar, (_, SettingsAvatar avatar) => avatar);
+    _currentAvatarSub = Observable.merge([
+      _currentRandomAvatar,
+      _currentUserAvatar,
+      _rejectRandomAvatar,
+    ]).listen(_currentAvatar.add);
+  }
+
+  void _initViewObservables() {
+    _initUserAvatarObservable();
+    _initNameAndCityObservables();
+    _initUserSaveResultObservable();
+  }
+
+  void _initUserAvatarObservable() {
+    final _avatarInput = VoidObservable.merge([
+      changeAvatarInput,
+      acceptAvatarInput,
+      rejectAvatarInput,
+    ]);
+    userAvatar = Observable.merge([
+      _avatarInput.map(() => LoadingState()),
+      _currentAvatar.map(DataState.create),
+    ]);
+  }
+
+  void _initNameAndCityObservables() {
+    userName = Observable.merge([
+      updateNameInput.map((_) => LoadingState()),
+      _user.map((it) => it.name).distinct().map(DataState.create),
+    ]);
+    userCity = Observable.merge([
+      updateCityInput.map((_) => LoadingState()),
+      _user.map((it) => it.city).distinct().map(DataState.create),
+    ]);
+  }
+
+  void _initUserSaveResultObservable() {
+    final _acceptRandomAvatar = acceptAvatarInput.withLatestFrom(
+        _currentRandomAvatar, (_, SettingsAvatar avatar) => avatar);
+    final pendingUser = Observable.merge([
+      updateNameInput.map((it) => User(name: it)),
+      updateCityInput.map((it) => User(city: it)),
+      _acceptRandomAvatar.map((it) => User(avatarId: it.id)),
+    ]);
+    userSaveResult = pendingUser
+        .withLatestFrom(_user, _copyLatestUser)
+        .asyncMap(_drinnerPrefs.saveUser);
   }
 
   User _copyLatestUser(User pending, User latest) {

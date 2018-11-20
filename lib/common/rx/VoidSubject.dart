@@ -43,4 +43,6 @@ class VoidObservable {
   Observable<S> map<S>(S convert()) => _observable.map((_) => convert());
   Observable<S> asyncMap<S>(FutureOr<S> convert()) =>
       _observable.asyncMap((_) => convert());
+  Observable<S> flatMap<S>(Stream<S> mapper()) =>
+      _observable.flatMap((_) => mapper());
 }

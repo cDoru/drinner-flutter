@@ -21,17 +21,23 @@ class SettingsPage extends StatefulWidget {
 class SettingsPageState extends State<SettingsPage> {
   SettingsBloc _settingsBloc;
   StreamSubscription _saveResultSub;
+  StreamSubscription _editNameSub;
+  StreamSubscription _editCitySub;
 
   @override
   void initState() {
     super.initState();
     _settingsBloc = BlocFactory.settingsBloc;
     _saveResultSub = _settingsBloc.userSaveResult.listen(_onSaveResult);
+    _editNameSub = _settingsBloc.editNameValue.listen(_showNameDialog);
+    _editCitySub = _settingsBloc.editCityValue.listen(_showCityDialog);
   }
 
   @override
   void dispose() {
     _saveResultSub.cancel();
+    _editNameSub.cancel();
+    _editCitySub.cancel();
     _settingsBloc.dispose();
     super.dispose();
   }
@@ -67,7 +73,7 @@ class SettingsPageState extends State<SettingsPage> {
               builder: (_, snapshot) => _SettingField(
                     name: 'Name',
                     state: snapshot.data,
-                    editAction: _showNameDialog,
+                    editAction: _settingsBloc.editNameInput.add,
                   ),
             ),
             SafeStreamBuilder(
@@ -75,7 +81,7 @@ class SettingsPageState extends State<SettingsPage> {
               builder: (_, snapshot) => _SettingField(
                     name: 'City',
                     state: snapshot.data,
-                    editAction: _showCityDialog,
+                    editAction: _settingsBloc.editCityInput.add,
                   ),
             ),
           ],
@@ -137,11 +143,11 @@ class SettingsPageState extends State<SettingsPage> {
     return Icon(Icons.error_outline, size: size);
   }
 
-  void _showNameDialog() => _settingsBloc.latestUser
-      .then((it) => _showEditDialog(it.name, _settingsBloc.updateNameInput));
+  void _showNameDialog(String currentName) =>
+      _showEditDialog(currentName, _settingsBloc.updateNameInput);
 
-  void _showCityDialog() => _settingsBloc.latestUser
-      .then((it) => _showEditDialog(it.city, _settingsBloc.updateCityInput));
+  void _showCityDialog(String currentCity) =>
+      _showEditDialog(currentCity, _settingsBloc.updateCityInput);
 
   void _showEditDialog(String currentValue, Subject<String> updateBlocInput) {
     EditValueDialog.show(

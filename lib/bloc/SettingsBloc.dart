@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:drinner_flutter/bloc/BlocProvider.dart';
+import 'package:drinner_flutter/common/Pair.dart';
 import 'package:drinner_flutter/common/rx/VoidSubject.dart';
 import 'package:drinner_flutter/common/view_state/ViewState.dart';
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
@@ -26,6 +27,8 @@ class SettingsBloc extends BaseBloc {
   VoidSubject changeAvatarInput = VoidSubject.publish();
   VoidSubject acceptAvatarInput = VoidSubject.publish();
   VoidSubject rejectAvatarInput = VoidSubject.publish();
+  VoidSubject editNameInput = VoidSubject.publish();
+  VoidSubject editCityInput = VoidSubject.publish();
   Subject<String> updateNameInput = PublishSubject();
   Subject<String> updateCityInput = PublishSubject();
 
@@ -37,8 +40,12 @@ class SettingsBloc extends BaseBloc {
   StreamSubscription _currentUserAvatarSub;
   StreamSubscription _currentAvatarSub;
 
+  Observable<String> get editNameValue =>
+      editNameInput.withLatestFrom(_user, (_, User user) => user.name);
+  Observable<String> get editCityValue =>
+      editCityInput.withLatestFrom(_user, (_, User user) => user.city);
+
   Observable<User> get _user => _drinnerPrefs.getUser();
-  Future<User> get latestUser => _user.take(1).last;
 
   @override
   void dispose() {
@@ -47,6 +54,8 @@ class SettingsBloc extends BaseBloc {
     changeAvatarInput.close();
     acceptAvatarInput.close();
     rejectAvatarInput.close();
+    editNameInput.close();
+    editCityInput.close();
     _currentRandomAvatar.close();
     _currentUserAvatar.close();
     _currentAvatar.close();
@@ -57,12 +66,13 @@ class SettingsBloc extends BaseBloc {
 
   void _initAvatarStreams() {
     _currentRandomAvatarSub = changeAvatarInput
-        .asyncMap(_getNextAvatarId)
-        .asyncMap((it) => _getSettingsAvatar(it, true))
+        .flatMap(_getNextAvatarId)
+        .flatMap((it) => _getSettingsAvatar(it, true))
         .listen(_currentRandomAvatar.add);
     _currentUserAvatarSub = _user
-        .distinct((u1, u2) => u1.avatarId == u2.avatarId)
-        .asyncMap((it) => _getSettingsAvatar(it.avatarId, false))
+        .map((it) => it.avatarId)
+        .distinct()
+        .flatMap((it) => _getSettingsAvatar(it, false))
         .listen(_currentUserAvatar.add);
 
     final _rejectRandomAvatar = rejectAvatarInput.withLatestFrom(
@@ -96,32 +106,44 @@ class SettingsBloc extends BaseBloc {
 
     final _acceptRandomAvatar = acceptAvatarInput.withLatestFrom(
         _currentRandomAvatar, (_, SettingsAvatar avatar) => avatar);
-    userSaveResult = Observable.merge([
-      updateNameInput.map((it) => _copyLatestUser(name: it)),
-      updateCityInput.map((it) => _copyLatestUser(city: it)),
-      _acceptRandomAvatar.map((it) => _copyLatestUser(avatarId: it.id)),
-    ]).asyncMap((it) => it.then(_drinnerPrefs.saveUser));
+    final pendingUser = Observable.merge([
+      updateNameInput.map((it) => User(name: it)),
+      updateCityInput.map((it) => User(city: it)),
+      _acceptRandomAvatar.map((it) => User(avatarId: it.id)),
+    ]);
+    userSaveResult = pendingUser
+        .withLatestFrom(_user, _copyLatestUser)
+        .asyncMap(_drinnerPrefs.saveUser);
   }
 
-  Future<int> _getNextAvatarId() async {
-    final current = await _currentAvatar.take(1).last;
-    final user = await _currentUserAvatar.take(1).last;
-    while (true) {
-      final nextId = await _drinnerApi.getRandomAvatarId();
-      if (nextId != user.id && nextId != current.id) {
-        return nextId;
-      }
-    }
+  Observable<SettingsAvatar> _getSettingsAvatar(int id, bool isRandom) {
+    return Observable.fromFuture(_drinnerApi.getAvatar(id))
+        .map((it) => SettingsAvatar(id, it, isRandom));
   }
 
-  Future<SettingsAvatar> _getSettingsAvatar(int id, bool isRandom) async {
-    final image = await _drinnerApi.getAvatar(id);
-    return SettingsAvatar(id, image, isRandom);
+  Observable<int> _getNextAvatarId() {
+    final latestAvatarsSource = () => Observable.combineLatest2(
+          _currentAvatar,
+          _currentUserAvatar,
+          (a1, a2) => Twin<SettingsAvatar>(a1, a2),
+        );
+    final nextIdSource = () =>
+        Observable.fromFuture(_drinnerApi.getRandomAvatarId())
+            .withLatestFrom(latestAvatarsSource(), _retainIdIfChanged)
+            .map((it) => it != null ? it : throw Exception());
+    return Observable.retry(nextIdSource);
   }
 
-  Future<User> _copyLatestUser({String name, String city, int avatarId}) {
-    return latestUser.then(
-      (it) => it.copy(name: name, city: city, avatarId: avatarId),
+  int _retainIdIfChanged(int id, Twin<SettingsAvatar> avatars) {
+    final changed = id != avatars.first.id && id != avatars.second.id;
+    return changed ? id : null;
+  }
+
+  User _copyLatestUser(User pending, User latest) {
+    return latest.copy(
+      name: pending.name,
+      city: pending.city,
+      avatarId: pending.avatarId,
     );
   }
 }

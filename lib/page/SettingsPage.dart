@@ -8,6 +8,7 @@ import 'package:drinner_flutter/common/EditValueDialog.dart';
 import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/common/view_state/ViewState.dart';
 import 'package:drinner_flutter/common/view_state/ViewStateWidget.dart';
+import 'package:drinner_flutter/model/City.dart';
 import 'package:flutter/material.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -23,6 +24,8 @@ class SettingsPageState extends State<SettingsPage> {
   StreamSubscription _saveResultSub;
   StreamSubscription _editNameSub;
   StreamSubscription _editCitySub;
+  StreamSubscription _nearestCitySub;
+  TextEditingController _cityInputController;
 
   @override
   void initState() {
@@ -30,14 +33,19 @@ class SettingsPageState extends State<SettingsPage> {
     _settingsBloc = BlocFactory.settingsBloc;
     _saveResultSub = _settingsBloc.userSaveResult.listen(_onSaveResult);
     _editNameSub = _settingsBloc.editNameValue.listen(_showNameDialog);
-    _editCitySub = _settingsBloc.editCityValue.listen(_showCityDialog);
+    _editCitySub = _settingsBloc.editCityData.listen(_showCitiesDialog);
+    _nearestCitySub = _settingsBloc.nearestCity.listen(_updateCityDialogInput);
+    _cityInputController = TextEditingController()
+      ..addListener(_onCityInputChanged);
   }
 
   @override
   void dispose() {
+    _cityInputController.dispose();
     _saveResultSub.cancel();
     _editNameSub.cancel();
     _editCitySub.cancel();
+    _nearestCitySub.cancel();
     _settingsBloc.dispose();
     super.dispose();
   }
@@ -45,7 +53,7 @@ class SettingsPageState extends State<SettingsPage> {
   void _onSaveResult(bool success) {
     final message = success ? 'User successfuly saved' : 'User save error';
     Scaffold.of(context).showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(content: Text(message), duration: Duration(milliseconds: 100)),
     );
   }
 
@@ -94,8 +102,10 @@ class SettingsPageState extends State<SettingsPage> {
     final isDone = !(state is LoadingState);
     final isRandom = state is LoadingState ||
         (state is DataState<SettingsAvatar> ? state.data.isRandom : false);
-    final avatar = ViewStateWidget(state,
-        builder: (_, avatar) => _buildAvatarImage(isDone, avatar.image));
+    final avatar = ViewStateWidget(
+      state: state,
+      builder: (_, avatar) => _buildAvatarImage(isDone, avatar.image),
+    );
     final icons = _buildAvatarIcons(isDone, isRandom);
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -143,22 +153,110 @@ class SettingsPageState extends State<SettingsPage> {
     return Icon(Icons.error_outline, size: size);
   }
 
-  void _showNameDialog(String currentName) =>
-      _showEditDialog(currentName, _settingsBloc.updateNameInput);
-
-  void _showCityDialog(String currentCity) =>
-      _showEditDialog(currentCity, _settingsBloc.updateCityInput);
-
-  void _showEditDialog(String currentValue, Subject<String> updateBlocInput) {
+  void _showNameDialog(String currentName) {
     EditValueDialog.show(
       context,
-      currentValue: currentValue,
+      currentValue: currentName,
       onComplete: (newValue) {
-        updateBlocInput.add(newValue);
+        _settingsBloc.updateNameInput.add(newValue);
         Navigator.pop(context);
       },
     );
   }
+
+  void _showCitiesDialog(
+      Observable<ViewState<ViewEditCityData>> citiesObservable) {
+    _cityInputController.clear();
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+            child: SafeStreamBuilder(
+              stream: citiesObservable,
+              builder: (_, snapshot) => Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _buildCitiesDialogTextRow(snapshot.data),
+                      _buildCitiesDialogList(snapshot.data),
+                    ],
+                  ),
+            ),
+          ),
+    );
+  }
+
+  Widget _buildCitiesDialogTextRow(ViewState<ViewEditCityData> state) {
+    final inputEnabled =
+        state is DataState<ViewEditCityData> && !state.data.isLocalizing;
+    final theme = Theme.of(context);
+    return Row(children: [
+      Expanded(
+        child: TextField(
+          style: TextStyle(
+            color: inputEnabled ? theme.primaryColor : theme.disabledColor,
+          ),
+          controller: _cityInputController,
+          enabled: inputEnabled,
+        ),
+      ),
+      IconButton(
+        icon: Icon(Icons.gps_fixed),
+        onPressed: inputEnabled ? _settingsBloc.locateCityInput.add : null,
+      ),
+    ]);
+  }
+
+  Widget _buildCitiesDialogList(ViewState<ViewEditCityData> state) {
+    return Flexible(
+      child: ViewStateWidget(
+        state: state,
+        builder: (_, ViewEditCityData cities) => cities.all.isEmpty
+            ? Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('😞'),
+                  Text(
+                    'No cities for given query',
+                    style: TextStyle(fontStyle: FontStyle.italic),
+                  ),
+                ],
+              )
+            : ListView.builder(
+                shrinkWrap: true,
+                itemCount: cities.all.length,
+                itemBuilder: (_, index) => _buildCitiesDialogListItem(
+                    cities.all[index], cities.current),
+              ),
+      ),
+    );
+  }
+
+  Widget _buildCitiesDialogListItem(City itemCity, City userCity) {
+    final iconSize = 24.0;
+    return InkWell(
+      onTap: () => _onCitiesDialogItemTap(itemCity),
+      child: Row(children: [
+        SizedBox(
+          width: iconSize,
+          height: iconSize,
+          child: itemCity.name == userCity.name
+              ? Icon(Icons.check, size: iconSize)
+              : null,
+        ),
+        Text(itemCity.name),
+      ]),
+    );
+  }
+
+  void _onCitiesDialogItemTap(City city) {
+    Navigator.of(context).pop();
+    _settingsBloc.updateCityInput.add(city.name);
+  }
+
+  void _updateCityDialogInput(City city) =>
+      _cityInputController.value = TextEditingValue(text: city.name);
+
+  void _onCityInputChanged() =>
+      _settingsBloc.editCityQueryInput.add(_cityInputController.text);
 }
 
 class _SettingField extends StatelessWidget {
@@ -179,11 +277,13 @@ class _SettingField extends StatelessWidget {
         ),
         Expanded(
           flex: 4,
-          child: ViewStateWidget(state,
-              builder: (_, data) => Text(
-                    data ?? '???',
-                    textAlign: TextAlign.center,
-                  )),
+          child: ViewStateWidget(
+            state: state,
+            builder: (_, data) => Text(
+                  data ?? '???',
+                  textAlign: TextAlign.center,
+                ),
+          ),
         ),
         Expanded(
           flex: 1,

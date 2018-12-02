@@ -7,15 +7,17 @@ import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/data/api/FakeApiImpl.dart';
 import 'package:drinner_flutter/data/prefs/DrinnerPrefs.dart';
 import 'package:drinner_flutter/data/prefs/FakePrefsImpl.dart';
+import 'package:drinner_flutter/service/Locator.dart';
 
 class BlocFactory {
   static DrinnerApi _drinnerApi = FakeApiImpl();
   static DrinnerPrefs _drinnerPrefs = FakePrefsImpl();
+  static Locator _locator = FakeLocatorImpl();
 
   static AppBloc get appBloc => AppBloc();
   static MainBloc get mainBloc => MainBloc();
   static VenuesBloc get venuesBloc => VenuesBloc(_drinnerPrefs, _drinnerApi);
   static MapBloc get mapBloc => MapBloc();
   static SettingsBloc get settingsBloc =>
-      SettingsBloc(_drinnerPrefs, _drinnerApi);
+      SettingsBloc(_drinnerPrefs, _drinnerApi, _locator);
 }

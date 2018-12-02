@@ -7,30 +7,38 @@ import 'package:drinner_flutter/common/rx/VoidSubject.dart';
 import 'package:drinner_flutter/common/view_state/ViewState.dart';
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/data/prefs/DrinnerPrefs.dart';
+import 'package:drinner_flutter/model/City.dart';
+import 'package:drinner_flutter/model/GeoPoint.dart';
 import 'package:drinner_flutter/model/User.dart';
+import 'package:drinner_flutter/service/Locator.dart';
 import 'package:rxdart/rxdart.dart';
 
 class SettingsBloc extends BaseBloc {
-  SettingsBloc(this._drinnerPrefs, this._drinnerApi) {
+  SettingsBloc(this._drinnerPrefs, this._drinnerApi, this._locator) {
     _initAvatarStreams();
     _initViewObservables();
   }
 
   final DrinnerPrefs _drinnerPrefs;
   final DrinnerApi _drinnerApi;
+  final Locator _locator;
 
   Observable<bool> userSaveResult;
   Observable<ViewState<String>> userName;
   Observable<ViewState<String>> userCity;
   Observable<ViewState<SettingsAvatar>> userAvatar;
+  Observable<Observable<ViewState<ViewEditCityData>>> editCityData;
+  Observable<City> nearestCity;
 
   VoidSubject changeAvatarInput = VoidSubject.publish();
   VoidSubject acceptAvatarInput = VoidSubject.publish();
   VoidSubject rejectAvatarInput = VoidSubject.publish();
   VoidSubject editNameInput = VoidSubject.publish();
   VoidSubject editCityInput = VoidSubject.publish();
+  VoidSubject locateCityInput = VoidSubject.publish();
   Subject<String> updateNameInput = PublishSubject();
   Subject<String> updateCityInput = PublishSubject();
+  Subject<String> editCityQueryInput = BehaviorSubject(seedValue: '');
   Subject<SettingsAvatar> _currentRandomAvatar = BehaviorSubject();
   Subject<SettingsAvatar> _currentUserAvatar = BehaviorSubject();
   Subject<SettingsAvatar> _currentAvatar = BehaviorSubject();
@@ -39,11 +47,11 @@ class SettingsBloc extends BaseBloc {
   StreamSubscription _currentUserAvatarSub;
   StreamSubscription _currentAvatarSub;
 
-  Observable<String> get editNameValue =>
-      editNameInput.withLatestFrom(_user, (_, User user) => user.name);
-  Observable<String> get editCityValue =>
-      editCityInput.withLatestFrom(_user, (_, User user) => user.city);
+  Observable<String> get _distinctCityInput =>
+      updateCityInput.flatMap(_filterCityChanged);
   Observable<User> get _user => _drinnerPrefs.getUser();
+  Observable<String> get editNameValue =>
+      editNameInput.mapLatestFrom(_user).map((it) => it.name);
 
   @override
   void dispose() {
@@ -53,7 +61,7 @@ class SettingsBloc extends BaseBloc {
     acceptAvatarInput.close();
     rejectAvatarInput.close();
     editNameInput.close();
-    editCityInput.close();
+    editCityQueryInput.close();
     _currentRandomAvatar.close();
     _currentUserAvatar.close();
     _currentAvatar.close();
@@ -103,8 +111,8 @@ class SettingsBloc extends BaseBloc {
   }
 
   void _initCurrentAvatarStream() {
-    final _rejectRandomAvatar = rejectAvatarInput.withLatestFrom(
-        _currentUserAvatar, (_, SettingsAvatar avatar) => avatar);
+    final _rejectRandomAvatar =
+        rejectAvatarInput.mapLatestFrom(_currentUserAvatar);
     _currentAvatarSub = Observable.merge([
       _currentRandomAvatar,
       _currentUserAvatar,
@@ -115,7 +123,8 @@ class SettingsBloc extends BaseBloc {
   void _initViewObservables() {
     _initUserAvatarObservable();
     _initNameAndCityObservables();
-    _initUserSaveResultObservable();
+    _initEditObservables();
+    _initUserSaveResultObservables();
   }
 
   void _initUserAvatarObservable() {
@@ -136,17 +145,69 @@ class SettingsBloc extends BaseBloc {
       _user.map((it) => it.name).distinct().map(DataState.create),
     ]);
     userCity = Observable.merge([
-      updateCityInput.map((_) => LoadingState()),
-      _user.map((it) => it.city).distinct().map(DataState.create),
+      _distinctCityInput.map((_) => LoadingState()),
+      Observable.merge([
+        Observable.just(LoadingState()),
+        _user.map((it) => it.city).distinct().map(DataState.create),
+      ]),
     ]);
   }
 
-  void _initUserSaveResultObservable() {
-    final _acceptRandomAvatar = acceptAvatarInput.withLatestFrom(
-        _currentRandomAvatar, (_, SettingsAvatar avatar) => avatar);
+  void _initEditObservables() {
+    nearestCity = locateCityInput
+        .flatMap(_zipCitiesAndPosition)
+        .flatMap((it) => _calcCitiesDists(it.first, it.second))
+        .doOnData((it) => it.sort((p1, p2) => p1.second.compareTo(p2.second)))
+        .map((it) => it.first.first)
+        .asBroadcastStream();
+    editCityData = editCityInput.map(() => Observable.merge([
+          Observable.just(LoadingState()),
+          getCityDialogData().map(DataState.create),
+        ]));
+  }
+
+  Observable<ViewEditCityData> getCityDialogData() {
+    final isLocalizingCity = Observable.merge([
+      locateCityInput.map(() => true),
+      nearestCity.map((_) => false),
+    ]).startWith(false);
+    return Observable.combineLatest3(
+      _user.flatMap(_loadEditCityData),
+      editCityQueryInput,
+      isLocalizingCity,
+      _filterCitiesByQuery,
+    );
+  }
+
+  ViewEditCityData _filterCitiesByQuery(
+      ViewEditCityData data, String query, bool isLocalizing) {
+    final regex = RegExp(query, caseSensitive: false);
+    final filtered = data.all.where((it) => regex.hasMatch(it.name)).toList();
+    return data.copy(isLocalizing: isLocalizing, all: filtered);
+  }
+
+  Observable<Pair<List<City>, GeoPoint>> _zipCitiesAndPosition() =>
+      Observable.zip2(
+        Observable.fromFuture(_drinnerApi.getCities()),
+        Observable.fromFuture(_locator.getCurrentPosition()),
+        Pair.create,
+      );
+
+  Observable<List<Pair<City, double>>> _calcCitiesDists(
+      List<City> cities, GeoPoint position) {
+    final citiesDists = cities.map((it) async {
+      final dist = await _locator.getDistance(it.center, position);
+      return Pair(it, dist);
+    });
+    return Observable.fromFuture(Future.wait(citiesDists));
+  }
+
+  void _initUserSaveResultObservables() {
+    final _acceptRandomAvatar =
+        acceptAvatarInput.mapLatestFrom(_currentRandomAvatar);
     final pendingUser = Observable.merge([
       updateNameInput.map((it) => User(name: it)),
-      updateCityInput.map((it) => User(city: it)),
+      _distinctCityInput.map((it) => User(city: it)),
       _acceptRandomAvatar.map((it) => User(avatarId: it.id)),
     ]);
     userSaveResult = pendingUser
@@ -161,6 +222,35 @@ class SettingsBloc extends BaseBloc {
       avatarId: pending.avatarId,
     );
   }
+
+  Observable<ViewEditCityData> _loadEditCityData(User user) {
+    return Observable.fromFuture(_drinnerApi.getCities()).map((cities) {
+      final current = cities.firstWhere((it) => it.name == user.city);
+      return ViewEditCityData(false, current, cities);
+    });
+  }
+
+  Observable<String> _filterCityChanged(String city) {
+    return Observable.just(city)
+        .distinct()
+        .flatMap((it) => Observable.zip2(Observable.just(it), _user,
+            (String city, User user) => city != user.city ? city : null))
+        .where((it) => it != null);
+  }
+}
+
+class ViewEditCityData {
+  ViewEditCityData(this.isLocalizing, this.current, this.all);
+  final bool isLocalizing;
+  final City current;
+  final List<City> all;
+
+  ViewEditCityData copy({bool isLocalizing, City current, List<City> all}) =>
+      ViewEditCityData(
+        isLocalizing ?? this.isLocalizing,
+        current ?? this.current,
+        all ?? this.all,
+      );
 }
 
 class ViewUser {

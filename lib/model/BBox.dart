@@ -21,4 +21,12 @@ class BBox {
   final double S;
   final double E;
   final double W;
+
+  GeoPoint get randomPoint {
+    final rand = Random();
+    return GeoPoint(
+      lat: S + rand.nextDouble() * (N - S),
+      lon: W + rand.nextDouble() * (E - W),
+    );
+  }
 }

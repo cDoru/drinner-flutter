@@ -11,10 +11,12 @@ import 'package:flutter/services.dart';
 
 class FakeApiImpl extends DrinnerApi {
   @override
-  Future<List<City>> getCities() => Future.value(_cities);
+  Future<List<City>> getCities() =>
+      Future.delayed(Duration(milliseconds: 500), () => _cities);
 
   @override
-  Future<List<Venue>> getCityVenues(String city) => Future.value(_venues);
+  Future<List<Venue>> getCityVenues(String city) =>
+      Future.delayed(Duration(milliseconds: 200), () => _venues);
 
   @override
   Future<int> getRandomAvatarId() => Future.delayed(

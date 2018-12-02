@@ -38,11 +38,15 @@ class VoidObservable {
     return VoidObservable._(merged);
   }
 
-  Observable<R> withLatestFrom<S, R>(Stream<S> stream, R fn(void v, S s)) =>
-      _observable.withLatestFrom(stream, fn);
+  Observable<R> withLatestFrom<S, R>(Stream<S> stream, R fn(S s)) =>
+      _observable.withLatestFrom(stream, (_, S s) => fn(s));
+  Observable<S> mapLatestFrom<S>(Stream<S> stream) =>
+      withLatestFrom(stream, (S s) => s);
   Observable<S> map<S>(S convert()) => _observable.map((_) => convert());
   Observable<S> asyncMap<S>(FutureOr<S> convert()) =>
       _observable.asyncMap((_) => convert());
   Observable<S> flatMap<S>(Stream<S> mapper()) =>
       _observable.flatMap((_) => mapper());
+  Observable<S> switchMap<S>(Stream<S> mapper()) =>
+      _observable.switchMap((_) => mapper());
 }

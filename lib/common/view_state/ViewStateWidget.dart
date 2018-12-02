@@ -5,7 +5,7 @@ import 'package:flutter/widgets.dart';
 typedef Widget DataStateBuilder<T>(BuildContext context, T data);
 
 class ViewStateWidget<T> extends StatelessWidget {
-  ViewStateWidget(this.state, {@required this.builder});
+  ViewStateWidget({@required this.state, @required this.builder});
 
   final ViewState<T> state;
   final DataStateBuilder<T> builder;
@@ -20,12 +20,10 @@ class ViewStateWidget<T> extends StatelessWidget {
   }
 
   Widget _buildLoadingIndicator() {
-    return Center(
-      child: Container(
-        width: 24.0,
-        height: 24.0,
-        child: CircularProgressIndicator(),
-      ),
+    return Container(
+      width: 24.0,
+      height: 24.0,
+      child: CircularProgressIndicator(),
     );
   }
 }

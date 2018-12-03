@@ -1,6 +1,7 @@
 import 'package:drinner_flutter/bloc/AppBloc.dart';
 import 'package:drinner_flutter/bloc/MainBloc.dart';
 import 'package:drinner_flutter/bloc/MapBloc.dart';
+import 'package:drinner_flutter/bloc/MeetingsBloc.dart';
 import 'package:drinner_flutter/bloc/SettingsBloc.dart';
 import 'package:drinner_flutter/bloc/VenuesBloc.dart';
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
@@ -20,4 +21,5 @@ class BlocFactory {
   static MapBloc get mapBloc => MapBloc();
   static SettingsBloc get settingsBloc =>
       SettingsBloc(_drinnerPrefs, _drinnerApi, _locator);
+  static MeetingsBloc get meetingsBloc => MeetingsBloc(_drinnerApi);
 }

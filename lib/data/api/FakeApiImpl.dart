@@ -4,6 +4,8 @@ import 'dart:typed_data';
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/model/BBox.dart';
 import 'package:drinner_flutter/model/City.dart';
+import 'package:drinner_flutter/model/Meeting.dart';
+import 'package:drinner_flutter/model/User.dart';
 import 'package:drinner_flutter/model/Venue.dart';
 import 'package:drinner_flutter/model/GeoPoint.dart';
 import 'package:drinner_flutter/model/Cuisine.dart';
@@ -27,7 +29,16 @@ class FakeApiImpl extends DrinnerApi {
       .load('images/avatars/$id.png')
       .then((it) => Uint8List.view(it.buffer));
 
-  final List<City> _cities = [
+  @override
+  Future<List<Meeting>> getMeetings() =>
+      Future.delayed(Duration(milliseconds: 600), () => _meetings);
+
+  static T _randomItem<T>(List<T> list) => list[Random().nextInt(list.length)];
+  static List<T> _randomSubList<T>(List<T> list) =>
+      list.toList()..removeWhere((_) => Random().nextBool());
+
+  static City get _randomCity => _randomItem(_cities);
+  static final List<City> _cities = [
     City("Wrocław",
         BBox(W: 16.844444, S: 51.018506, E: 17.169914, N: 51.171164)),
     City(
@@ -41,7 +52,8 @@ class FakeApiImpl extends DrinnerApi {
         BBox(W: 20.863724, S: 52.140231, E: 21.187134, N: 52.328206)),
   ];
 
-  final List<Venue> _venues = [
+  static Venue get _randomVenue => _randomItem(_venues);
+  static final List<Venue> _venues = [
     Venue("The Root", GeoPoint(lat: 51.1083784, lon: 17.0268721), []),
     Venue("Convivio", GeoPoint(lat: 51.1100508, lon: 17.0391776), []),
     Venue("Pod Papugami", GeoPoint(lat: 51.1101758, lon: 17.0313678), []),
@@ -58,5 +70,50 @@ class FakeApiImpl extends DrinnerApi {
         [Cuisine.POLISH]),
     Venue("Osiem Misek", GeoPoint(lat: 51.1095493, lon: 17.0232535),
         [Cuisine.ASIAN]),
+  ];
+
+  static const EPOCH_FACTOR = 10000000000;
+  static const EPOCH_START = 152 * EPOCH_FACTOR;
+  static const EPOCH_END = 154 * EPOCH_FACTOR;
+  static int get _randomEpoch =>
+      (EPOCH_START + Random().nextDouble() * (EPOCH_END - EPOCH_START)).toInt();
+  static DateTime get _randomDateTime =>
+      DateTime.fromMillisecondsSinceEpoch(_randomEpoch);
+
+  static final List<Meeting> _meetings = [
+    Meeting(
+        dateTime: _randomDateTime,
+        venue: _randomVenue,
+        members: _randomPersons),
+    Meeting(
+        dateTime: _randomDateTime,
+        venue: _randomVenue,
+        members: _randomPersons),
+    Meeting(
+        dateTime: _randomDateTime,
+        venue: _randomVenue,
+        members: _randomPersons),
+    Meeting(
+        dateTime: _randomDateTime,
+        venue: _randomVenue,
+        members: _randomPersons),
+    Meeting(
+        dateTime: _randomDateTime,
+        venue: _randomVenue,
+        members: _randomPersons),
+  ];
+
+  static List<User> get _randomPersons => _randomSubList(_persons);
+  static final List<User> _persons = [
+    User(name: 'Bessie Romero', city: _randomCity.name, avatarId: 0),
+    User(name: 'Frederick Harvey', city: _randomCity.name, avatarId: 1),
+    User(name: 'Jessica George', city: _randomCity.name, avatarId: 2),
+    User(name: 'Miriam Franklin', city: _randomCity.name, avatarId: 3),
+    User(name: 'Cory Matthews', city: _randomCity.name, avatarId: 4),
+    User(name: 'Brent Fisher', city: _randomCity.name, avatarId: 5),
+    User(name: 'Brett Holt', city: _randomCity.name, avatarId: 6),
+    User(name: 'Claire Chapman', city: _randomCity.name, avatarId: 7),
+    User(name: 'Norman Mason', city: _randomCity.name, avatarId: 8),
+    User(name: 'Shawn Chambers', city: _randomCity.name, avatarId: 9),
   ];
 }

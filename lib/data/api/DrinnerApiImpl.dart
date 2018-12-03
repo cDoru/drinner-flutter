@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:drinner_flutter/data/api/DrinnerApi.dart';
 import 'package:drinner_flutter/model/City.dart';
+import 'package:drinner_flutter/model/Meeting.dart';
 import 'package:drinner_flutter/model/Venue.dart';
 import 'package:http/http.dart' as http;
 
@@ -29,4 +30,10 @@ class DrinnerApiImpl extends DrinnerApi {
   @override
   Future<Uint8List> getAvatar(int id) =>
       http.get(_avatarsUrl + '$id').then((it) => it.bodyBytes);
+
+  @override
+  Future<List<Meeting>> getMeetings() {
+    // TODO: implement getMeetings
+    return null;
+  }
 }

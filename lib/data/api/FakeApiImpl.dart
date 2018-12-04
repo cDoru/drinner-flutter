@@ -21,13 +21,16 @@ class FakeApiImpl extends DrinnerApi {
       Future.delayed(Duration(milliseconds: 200), () => _venues);
 
   @override
-  Future<int> getRandomAvatarId() => Future.delayed(
-      Duration(milliseconds: 300), () => 1 + Random().nextInt(10));
+  Future<int> getRandomAvatarId() =>
+      Future.delayed(Duration(milliseconds: 300), () => Random().nextInt(10));
 
   @override
-  Future<Uint8List> getAvatar(int id) => rootBundle
-      .load('images/avatars/$id.png')
-      .then((it) => Uint8List.view(it.buffer));
+  Future<Uint8List> getAvatar(int id) => Future.delayed(
+        Duration(milliseconds: Random().nextInt(2000) - 1000),
+        () => rootBundle
+            .load('images/avatars/$id.png')
+            .then((it) => Uint8List.view(it.buffer)),
+      );
 
   @override
   Future<List<Meeting>> getMeetings() =>
@@ -82,22 +85,27 @@ class FakeApiImpl extends DrinnerApi {
 
   static final List<Meeting> _meetings = [
     Meeting(
+        name: 'Paulable',
         dateTime: _randomDateTime,
         venue: _randomVenue,
         members: _randomPersons),
     Meeting(
+        name: 'Confessions of a Blogging Freak',
         dateTime: _randomDateTime,
         venue: _randomVenue,
         members: _randomPersons),
     Meeting(
+        name: 'Smart Arrogant Blog',
         dateTime: _randomDateTime,
         venue: _randomVenue,
         members: _randomPersons),
     Meeting(
+        name: 'The P Word',
         dateTime: _randomDateTime,
         venue: _randomVenue,
         members: _randomPersons),
     Meeting(
+        name: 'Sewing Overload',
         dateTime: _randomDateTime,
         venue: _randomVenue,
         members: _randomPersons),

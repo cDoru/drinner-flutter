@@ -7,7 +7,7 @@ import 'package:rxdart/rxdart.dart';
 class FakePrefsImpl extends DrinnerPrefs {
   static User _user = User(
     name: 'test user',
-    avatarId: 1,
+    avatarId: 0,
     city: 'Wrocław',
   );
 

@@ -1,6 +1,6 @@
 import 'dart:math';
 
-import 'package:drinner_flutter/common/marker/MarkerBubblePainter.dart';
+import 'package:drinner_flutter/common/map/marker/MarkerBubblePainter.dart';
 import 'package:drinner_flutter/model/Cuisine.dart';
 import 'package:drinner_flutter/model/Venue.dart';
 import 'package:flutter/material.dart';

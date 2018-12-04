@@ -1,5 +1,5 @@
-import 'package:drinner_flutter/common/map/animated_marker/layer.dart';
-import 'package:drinner_flutter/common/map/animated_marker/plugin.dart';
+import 'package:drinner_flutter/common/map/layer/animated_marker/layer.dart';
+import 'package:drinner_flutter/common/map/layer/animated_marker/plugin.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:flutter_map/plugin_api.dart';

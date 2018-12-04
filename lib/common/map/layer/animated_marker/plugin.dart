@@ -1,4 +1,4 @@
-import 'package:drinner_flutter/common/map/animated_marker/layer.dart';
+import 'package:drinner_flutter/common/map/layer/animated_marker/layer.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_map/plugin_api.dart';
 

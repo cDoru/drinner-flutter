@@ -4,6 +4,7 @@ import 'package:drinner_flutter/bloc/MeetingsBloc.dart';
 import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/common/view_state/ViewStateWidget.dart';
 import 'package:drinner_flutter/model/Meeting.dart';
+import 'package:drinner_flutter/page/MeetingDetailsPage.dart';
 import 'package:flutter/material.dart';
 
 class MeetingsPage extends StatefulWidget {
@@ -51,18 +52,20 @@ class MeetingsPageState extends State<MeetingsPage> {
 
   Widget _buildMeetingItem(Meeting meeting) {
     return InkWell(
-      onTap: () => Scaffold.of(context).showSnackBar(SnackBar(
-            content: Text(meeting.venue.name),
-            duration: Duration(milliseconds: 100),
-          )),
+      onTap: () => _openMeetingDetails(meeting),
       child: Padding(
         padding: EdgeInsets.symmetric(vertical: 8.0),
         child: Column(mainAxisSize: MainAxisSize.min, children: [
           Text('When: ${meeting.dateTime.toIso8601String()}'),
           Text('Where: ${meeting.venue.name}'),
-          Text('Who: ${meeting.members.length}'),
+          Text('Members: ${meeting.members.length}'),
         ]),
       ),
     );
+  }
+
+  void _openMeetingDetails(Meeting meeting) {
+    final page = MaterialPageRoute(builder: (_) => MeetingDetailsPage(meeting));
+    Navigator.of(context).push(page);
   }
 }

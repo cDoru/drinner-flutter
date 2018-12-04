@@ -57,22 +57,32 @@ class FakeApiImpl extends DrinnerApi {
 
   static Venue get _randomVenue => _randomItem(_venues);
   static final List<Venue> _venues = [
-    Venue("The Root", GeoPoint(lat: 51.1083784, lon: 17.0268721), []),
-    Venue("Convivio", GeoPoint(lat: 51.1100508, lon: 17.0391776), []),
-    Venue("Pod Papugami", GeoPoint(lat: 51.1101758, lon: 17.0313678), []),
-    Venue("Masala Grill", GeoPoint(lat: 51.110848, lon: 17.0338452), []),
-    Venue("Chatka przy Jatkach", GeoPoint(lat: 51.1119831, lon: 17.0314141),
+    Venue("The Root", "Krupnicza 3", GeoPoint(lat: 51.1083784, lon: 17.0268721),
+        []),
+    Venue("Convivio", "Purkyniego 1",
+        GeoPoint(lat: 51.1100508, lon: 17.0391776), []),
+    Venue("Pod Papugami", "Sukiennice 9a",
+        GeoPoint(lat: 51.1101758, lon: 17.0313678), []),
+    Venue("Masala Grill", "Kuźnicza 3",
+        GeoPoint(lat: 51.110848, lon: 17.0338452), []),
+    Venue(
+        "Chatka przy Jatkach",
+        "Odrzańska 7",
+        GeoPoint(lat: 51.1119831, lon: 17.0314141),
         [Cuisine.REGIONAL, Cuisine.POLISH]),
-    Venue("Sushi Darea", GeoPoint(lat: 51.1129193, lon: 17.0344004),
+    Venue(
+        "Sushi Darea",
+        "Kuźnicza 43/45",
+        GeoPoint(lat: 51.1129193, lon: 17.0344004),
         [Cuisine.JAPANESE, Cuisine.KOREAN, Cuisine.SUSHI]),
-    Venue("Trattoria Pesto", GeoPoint(lat: 51.1115553, lon: 17.0334811),
-        [Cuisine.ITALIAN]),
-    Venue("Pattie's", GeoPoint(lat: 51.1114546, lon: 17.0334811),
+    Venue("Trattoria Pesto", "Kotlarska 40",
+        GeoPoint(lat: 51.1115553, lon: 17.0334811), [Cuisine.ITALIAN]),
+    Venue("Pattie's", "Igielna 16", GeoPoint(lat: 51.1114546, lon: 17.0334811),
         [Cuisine.PANCAKES]),
-    Venue("Kurna Chata", GeoPoint(lat: 51.1130591, lon: 17.0317662),
-        [Cuisine.POLISH]),
-    Venue("Osiem Misek", GeoPoint(lat: 51.1095493, lon: 17.0232535),
-        [Cuisine.ASIAN]),
+    Venue("Kurna Chata", "Odrzańska 17",
+        GeoPoint(lat: 51.1130591, lon: 17.0317662), [Cuisine.POLISH]),
+    Venue("Osiem Misek", "Włodkowica 27",
+        GeoPoint(lat: 51.1095493, lon: 17.0232535), [Cuisine.ASIAN]),
   ];
 
   static const EPOCH_FACTOR = 10000000000;

@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:drinner_flutter/bloc/BlocFactory.dart';
 import 'package:drinner_flutter/bloc/MeetingDetailsBloc.dart';
+import 'package:drinner_flutter/common/AnimatedSwitch.dart';
 import 'package:drinner_flutter/common/map/DrinnerMap.dart';
 import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
 import 'package:drinner_flutter/model/MapCamera.dart';
@@ -21,22 +23,67 @@ class MeetingDetailsPage extends StatefulWidget {
   MeetingDetailsPageState createState() => MeetingDetailsPageState();
 }
 
-class MeetingDetailsPageState extends State<MeetingDetailsPage> {
+class MeetingDetailsPageState extends State<MeetingDetailsPage>
+    with SingleTickerProviderStateMixin {
   MeetingDetailsBloc _detailsBloc;
+  StreamSubscription _cameraUpdateSub;
+  StreamSubscription _autoPositionSub;
+  MapController _mapController;
+  AnimationController _animator;
+  Animation<MapCamera> _animation;
 
   Meeting get _meeting => widget.meeting;
 
   @override
   void initState() {
     super.initState();
+    _animator = AnimationController(vsync: this, duration: Duration(seconds: 1))
+      ..addListener(() => _updateMapPosition(_animation.value));
+    _mapController = MapController();
     _detailsBloc = BlocFactory.meetingDetailsBloc;
-    _detailsBloc.membersInput.add(_meeting.members);
+    _cameraUpdateSub = _detailsBloc.cameraUpdate.listen(_animateToCamera);
+    _detailsBloc.meetingInput.add(_meeting);
+    _autoPositionSub = _detailsBloc.autoPosition.listen(_onAutoPositionChanged);
   }
 
   @override
   void dispose() {
+    _animator.dispose();
     _detailsBloc.dispose();
+    _cameraUpdateSub.cancel();
+    _autoPositionSub.cancel();
     super.dispose();
+  }
+
+  void _updateMapPosition(MapCamera camera) {
+    final center = LatLng(camera.lat, camera.lon);
+    final zoom = camera.zoom;
+    _mapController.move(center, zoom);
+  }
+
+  void _animateToCamera(MapCamera camera) async {
+    await _mapController.onReady;
+    final current = camera.copy(
+      lat: _mapController.center?.latitude,
+      lon: _mapController.center?.longitude,
+      zoom: _mapController.zoom,
+    );
+    _animation = Tween(begin: current, end: camera).animate(CurvedAnimation(
+      curve: Curves.fastOutSlowIn,
+      parent: _animator,
+    ));
+    _animator.forward(from: 0.0);
+  }
+
+  void _onTapEvent(bool tapped) {
+    if (tapped && _animator.isAnimating) {
+      _animator.stop();
+    }
+    _detailsBloc.tappedInput.add(tapped);
+  }
+
+  void _onAutoPositionChanged(bool enabled) {
+    if (!enabled && _animator.isAnimating) _animator.stop();
   }
 
   @override
@@ -132,21 +179,47 @@ class MeetingDetailsPageState extends State<MeetingDetailsPage> {
     final camera = MapCamera(
       lat: venue.location.lat,
       lon: venue.location.lon,
-      zoom: 15.0,
+      zoom: _detailsBloc.startZoom,
     );
     return Expanded(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(_meeting.venue.name),
-          Expanded(
-            child: DrinnerMap.create(
-              context,
-              interactive: false,
-              camera: camera,
-              venues: [venue],
+          Row(children: [
+            Flexible(
+              fit: FlexFit.tight,
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_meeting.venue.name),
+                  Text(_meeting.venue.address),
+                ],
+              ),
             ),
-          )
+            Flexible(
+              fit: FlexFit.tight,
+              child: Center(
+                child: AnimatedSwitch(
+                  text: 'Auto position',
+                  initValue: _detailsBloc.autoPosInitValue,
+                  onChanged: _detailsBloc.autoPositionInput.add,
+                ),
+              ),
+            ),
+          ]),
+          Expanded(
+            child: Listener(
+              onPointerDown: (_) => _onTapEvent(true),
+              onPointerUp: (_) => _onTapEvent(false),
+              child: DrinnerMap(
+                context: context,
+                camera: camera,
+                venues: [venue],
+                onCameraChanged: _detailsBloc.cameraChangeInput.add,
+                mapController: _mapController,
+              ),
+            ),
+          ),
         ],
       ),
     );

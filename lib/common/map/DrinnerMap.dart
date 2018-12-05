@@ -2,6 +2,7 @@ import 'package:drinner_flutter/app/AppAttrs.dart';
 import 'package:drinner_flutter/app/AppConfig.dart';
 import 'package:drinner_flutter/common/map/marker/VenueMarker.dart';
 import 'package:drinner_flutter/common/rx/SafeStreamBuilder.dart';
+import 'package:drinner_flutter/common/typedefs.dart';
 import 'package:drinner_flutter/model/MapCamera.dart';
 import 'package:drinner_flutter/model/Venue.dart';
 import 'package:flutter/widgets.dart';
@@ -10,30 +11,25 @@ import 'package:latlong/latlong.dart';
 import 'package:rxdart/rxdart.dart';
 
 class DrinnerMap extends StatefulWidget {
-  DrinnerMap._(
-    this.source,
-    this.camera,
-    this.interactive,
-    this.venues,
-  );
-
-  final _DrinnerMapSource source;
-  final bool interactive;
-  final MapCamera camera;
-  final List<Venue> venues;
-
-  factory DrinnerMap.create(
-    BuildContext context, {
-    bool interactive,
+  DrinnerMap({
+    BuildContext context,
     MapCamera camera,
     List<Venue> venues,
-  }) =>
-      DrinnerMap._(
-        _DrinnerMapSource.mapbox(context),
-        camera ?? MapCamera(lat: 51.11, lon: 17.03, zoom: 15.0),
-        interactive ?? true,
-        venues ?? [],
-      );
+    Callback<MapCamera> onCameraChanged,
+    MapController mapController,
+  })  : this.source = _DrinnerMapSource.mapbox(context),
+        this.camera = camera ?? MapCamera(lat: 51.11, lon: 17.03, zoom: 15.0),
+        this.venues = venues ?? [],
+        this.onCameraChanged = onCameraChanged ?? _blankOnCameraChanged,
+        this.mapController = mapController ?? MapController();
+
+  final _DrinnerMapSource source;
+  final MapCamera camera;
+  final List<Venue> venues;
+  final Callback<MapCamera> onCameraChanged;
+  final MapController mapController;
+
+  static void _blankOnCameraChanged(MapCamera camera) {}
 
   @override
   DrinnerMapState createState() => DrinnerMapState();
@@ -43,11 +39,11 @@ class DrinnerMapState extends State<DrinnerMap> {
   static const double _MIN_ZOOM = 8.0;
   static const double _MAX_ZOOM = 19.0;
 
-  MapController _mapController;
   Subject<MapCamera> _cameraSubject;
 
   Observable<double> get _zoomEvent => _cameraSubject
       .debounce(Duration(milliseconds: 100))
+      .doOnData(widget.onCameraChanged)
       .map((it) => it.zoom.roundToDouble())
       .distinct();
 
@@ -55,7 +51,6 @@ class DrinnerMapState extends State<DrinnerMap> {
   void initState() {
     super.initState();
     _cameraSubject = BehaviorSubject(seedValue: widget.camera);
-    _mapController = MapController();
   }
 
   @override
@@ -80,13 +75,12 @@ class DrinnerMapState extends State<DrinnerMap> {
 
   FlutterMap _buildDrinnerMap(double zoom) {
     return FlutterMap(
-      mapController: _mapController,
+      mapController: widget.mapController,
       options: MapOptions(
         minZoom: _MIN_ZOOM,
         maxZoom: _MAX_ZOOM,
         zoom: widget.camera.zoom,
         center: LatLng(widget.camera.lat, widget.camera.lon),
-        interactive: widget.interactive,
         onPositionChanged: _onPositionChanged,
       ),
       layers: [
